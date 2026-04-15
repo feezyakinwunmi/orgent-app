@@ -1,0 +1,18 @@
+export const bankCodes: Record<string, string> = {
+  'Access Bank': '044',
+  'Fidelity Bank': '070',
+  'First Bank': '011',
+  'GTBank': '058',
+  'Kuda Bank': '50211',
+  'Moniepoint': '50515',
+  'Opay': '999992',
+  'Palmpay': '999993',
+  'Polaris Bank': '076',
+  'Providus Bank': '101',
+  'Stanbic IBTC': '221',
+  'Sterling Bank': '232',
+  'UBA': '033',
+  'Union Bank': '032',
+  'Wema Bank': '035',
+  'Zenith Bank': '057',
+}
