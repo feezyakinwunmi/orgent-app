@@ -32,22 +32,18 @@ export default function SignupPage() {
 
   const supabase = createClient()
   
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const refCode = urlParams.get('ref')
-  if (refCode) {
-    localStorage.setItem('referralCode', refCode)
-  }
-}, [])
-
-
-  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const refCode = urlParams.get('ref')
+    if (refCode) {
+      localStorage.setItem('referralCode', refCode)
+    }
+  }, [])
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setSuccess(false)
 
     // Prepare metadata based on role
     const metadata: any = {
@@ -64,7 +60,7 @@ useEffect(() => {
       metadata.business_description = businessDescription
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -72,46 +68,127 @@ useEffect(() => {
       },
     })
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
-    } else {
+      return
+    }
 
-        // After successful signup - add this INSIDE the else block where success is true
-if (data.user) {
-  const referralCode = localStorage.getItem('referralCode')
-  if (referralCode) {
-    const { data: referrer } = await supabase
-      .from('referral_codes')
-      .select('user_id')
-      .eq('code', referralCode)
-      .single()
+    if (data.user) {
+      try {
+        // 1. Create profile in profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            role: role,
+            grade: 'E', // Starting rank for seekers
+            points_balance: role === 'seeker' ? 100 : 0, // Bonus points for new seekers
+            is_email_verified: false,
+            is_identity_verified: false,
+            is_skill_verified: false,
+            is_premium: false,
+            verification_badge_level: 'none',
+            identity_verification_status: 'pending',
+            skill_verification_status: 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError)
+          setError('Failed to create profile. Please try again.')
+          setLoading(false)
+          return
+        }
+
+        // 2. Create role-specific profile
+        if (role === 'seeker') {
+          const { error: seekerError } = await supabase
+            .from('seeker_profiles')
+            .insert({
+              user_id: data.user.id,
+              skills: [],
+              experience_years: 0,
+              work_samples: [],
+              phone: '',
+              location: '',
+              bio: '',
+              cv_url: '',
+              cv_filename: '',
+              experience_description: '',
+              portfolio_url: '',
+              github_url: '',
+              linkedin_url: '',
+              twitter_url: ''
+            })
+
+          if (seekerError) {
+            console.error('Seeker profile creation error:', seekerError)
+          }
+        } else if (role === 'business') {
+          const { error: businessError } = await supabase
+            .from('business_profiles')
+            .insert({
+              user_id: data.user.id,
+              business_name: businessName,
+              business_type: businessType,
+              description: businessDescription,
+              phone: businessPhone,
+              address: businessAddress,
+              logo_url: null,
+              subscription_tier: 'free',
+              jobs_posted_this_month: 0,
+              free_jobs_used_this_month: 0
+            })
+
+          if (businessError) {
+            console.error('Business profile creation error:', businessError)
+          }
+        }
+
+        // 3. Handle referral code
+        const referralCode = localStorage.getItem('referralCode')
+        if (referralCode) {
+          const { data: referrer } = await supabase
+            .from('referral_codes')
+            .select('user_id')
+            .eq('code', referralCode)
+            .single()
+          
+          if (referrer) {
+            await supabase
+              .from('referrals')
+              .insert({
+                referrer_id: referrer.user_id,
+                referred_id: data.user.id,
+                status: 'pending'
+              })
+          }
+          localStorage.removeItem('referralCode')
+        }
+
+        setSuccess(true)
+        
+        // Clear form
+        setFullName('')
+        setEmail('')
+        setPassword('')
+        setBusinessName('')
+        setBusinessType('')
+        setBusinessPhone('')
+        setBusinessAddress('')
+        setBusinessDescription('')
+        
+      } catch (err) {
+        console.error('Signup error:', err)
+        setError('An error occurred during signup. Please try again.')
+      }
+    }
     
-    if (referrer) {
-      await supabase
-        .from('referrals')
-        .insert({
-          referrer_id: referrer.user_id,
-          referred_id: data.user.id,
-          status: 'pending'
-        })
-    }
-    localStorage.removeItem('referralCode')
-  }
-}
-      setSuccess(true)
-      setLoading(false)
-      
-      // Clear form
-      setFullName('')
-      setEmail('')
-      setPassword('')
-      setBusinessName('')
-      setBusinessType('')
-      setBusinessPhone('')
-      setBusinessAddress('')
-      setBusinessDescription('')
-    }
+    setLoading(false)
   }
 
   if (success) {
@@ -152,9 +229,6 @@ if (data.user) {
       </div>
     )
   }
-
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
