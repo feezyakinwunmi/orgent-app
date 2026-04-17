@@ -231,7 +231,7 @@ export default function Home() {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/20">
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
                 <img 
-                  src="/soloL.jpeg" 
+                  src="/solol.jpeg" 
                   alt="Solo Leveling Inspired Hero"
                   className="w-full h-auto object-cover"
                   style={{ maxHeight: '500px' }}
