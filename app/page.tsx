@@ -218,15 +218,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition duration-300" />
                 </Button>
               </Link>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="text-lg"
-                onClick={() => scrollToSection(featuresRef)}
-              >
-                Watch Trailer
-                <Play className="w-4 h-4 ml-2" />
-              </Button>
+            
             </motion.div>
 
             {/* Hero Image Space - Anime Style */}
@@ -245,7 +237,7 @@ export default function Home() {
                   style={{ maxHeight: '500px' }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black to-transparent z-20">
-                  <p className="text-white text-lg font-semibold">"Arise, Hunter."</p>
+                  <p className="text-purple-500 text-lg font-semibold">"Arise, Hunter."</p>
                   <p className="text-gray-400 text-sm">Your journey begins now</p>
                 </div>
               </div>
